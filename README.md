@@ -1,10 +1,10 @@
 # Excluding-values-in-multiple-column-mean-calculations
-Grabbed row wise means for multiple columns and excluded multiple values in those means
+Grabbed row-wise means for multiple columns and excluded multiple values in those means
 
 # The task
 I have data that's 1 row per person where people reported the number of drinks they had in a specific time-block. The columns are various time blocks, but the participant could also provide other answers that were coded differently:
 * ```NA``` means that they didn't use alcohol at all
-* ```0``` mean that they had no drinks in that time
+* ```0``` mean that they had no drinks at that time
 * ```-999``` means that they did drink in that time block, but they can't remember how much. 
 
 Here's the fun part. We want to impute a typical person-mean for ```-999```. In practice, this means that if a person reported they drank in the time block but can't remember how much, we suggest they drank whatever is typical for them. 
@@ -22,7 +22,7 @@ library(dplyr)
 library(purrr)
 ```
 # The data
-The data I completed this task with orginally had `2,348` variables and about `500` observations. I've created a fake version of this data since the orgianl data was confidential. This fake data is stored [here](fakedata.csv). 
+The data I completed this task with originally had `2,348` variables and about `500` observations. I've created a fake version of this data since the original data was confidential. This fake data is stored [here](fakedata.csv). 
 
 ```
 #Read in the data
@@ -35,7 +35,7 @@ It's always a good idea to ensure your data is truly 1 row/person. I checked for
 ```
 fd.df$ResponseId[duplicated(fd.df$ResponseId)]
 ```
-```character(0)``` was reutrned so there were no duplicates. 
+```character(0)``` was returned so there were no duplicates. 
 
 # The function
 
@@ -51,7 +51,7 @@ For the third code line starting with ```mutate()```: The ```(.)``` refers to th
 
 Next, I'm telling ```apply()``` that I want to (apply) use a function and that function is the ```mean()``` of the dataframe ```(.)``` so long as the values in the dataframe are greater than 0 and I want to keep my ```NA``` values (```(.[.>0], na.rm =T ```). Using any value greater than 0 will also exclude my ```-999``` which I want to impute later. 
 
-# Impute
+# Impute the mean
 
 I'm going to add this line of code to the code above: ``` mutate_at(vars(starts_with("AD")), ~if_else(. == -999,  avg, .))```
 and it will appear as:
@@ -65,7 +65,7 @@ Let's break this down.
 * We are doing the same thing again with ```mutate_at()``` which is just to show functionality. You can do it with indexes too. 
 * The reason I have saved a column called `avg` is so I can check to ensure everything is working next. 
 * Now my fourth code line reads as follows: for all columns that start with "AD" (aka index 2, 121) apply the following `if_else()` statement to the whole dataframe (denoted with the `~`). 
-* The `if_else()` statement reads as folllows: if anywhere in the dataframe (denoted by `(.)`) is equal too `-999`, then replace with `avg`. If it's not, keep it the same (denoted by `(.)` again). 
+* The `if_else()` statement reads as follows: if anywhere in the dataframe (denoted by `(.)`) is equal too `-999`, then replace with `avg`. If it's not, keep it the same (denoted by `(.)` again). 
 
 The output will be successfully leaving all other data alone (e.g. ID's, demographics, contact information, etc) and only manipulating the columns specified in `starts_with()` and/or the index you give. 
 
@@ -75,12 +75,12 @@ In all of my code, I always encourage checking to make sure your functions/code 
 For this check, I wanted a column that I knew previously had a value of `-999`. I knew to select the column `AD1B3` using this code:
 ```
 check.df <- fd.df %>% 
-  mutate_at(vars(starts_with("AD")), as.numeric, NaN.rm = T, na.rm = T) %>% 
+  mutate_at(vars(starts_with("AD")), as.numeric, na.rm = T) %>% 
   mutate(avg = apply(.[2:121],1, function(.) mean(.[.>0], na.rm =T))) %>%
   select(2:121, avg) %>% 
   select_if(~min(., na.rm = TRUE) < 0) 
 ```
-When I ran this, the first line had ```-999``` and other values, which was nice.  Otherwise, I probably would have needed to come up with a better way to graph exactly waht I wanted (suggestions welcome). 
+When I ran this, the first line had ```-999``` and other values, which was nice.  Otherwise, I probably would have needed to come up with a better way to examine exactly what I wanted (suggestions welcome). 
 
 ```
       AD1B3 AD2B3 AD2B4 AD3B3 AD4B3 AD4B4 AD5B3 AD5B4 AD6B3 AD6B4 AD7B3 AD8B3 AD9B2 AD9B3 AD9B4 AD10B3 AD10B4
@@ -101,7 +101,7 @@ check.df <- fd.df %>%
    AD4B2  AD4B3 AD12B2 AD12B3 avg
 [1]     2     4      4      4  3.5
 ```
-Now I see that, 3.5 is the correct average. 
+Now, I can see that 3.5 is the correct average. 
 
 I've saved my manipulated data to a dataframe called `final.df`. First, I took a look to make sure the `apply()` function for means was actually excluding all the values I wanted it to. 
 ```
