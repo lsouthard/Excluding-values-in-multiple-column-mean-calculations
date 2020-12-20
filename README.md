@@ -22,7 +22,7 @@ library(dplyr)
 library(purrr)
 ```
 # The data
-The data I completed this task with orginally had `2,348` variables and about `500` observations. I've created a fake version of this data since the orgianl data was confidential. This fake data is stored here. 
+The data I completed this task with orginally had `2,348` variables and about `500` observations. I've created a fake version of this data since the orgianl data was confidential. This fake data is stored [here](fakedata.csv). 
 
 ```
 #Read in the data
@@ -47,7 +47,7 @@ final.df <- fd.df %>%
   mutate_at(vars(starts_with("AD")), as.numeric, na.rm = T) %>%
   mutate(avg = apply(.[2:121],1, function(.) mean(.[.>0], na.rm =T)))
 ```
-For the third code line starting with ```mutate()```: The ```(.)``` refers to the whole dataframe, but I'm specicying the index that I want the function to apply here: ```(.[2,121]``` this is required if you have other data in your dataframe, such as ID numbers. The ```1``` refers to row-wise. I could have put a ```2``` for column-wise, if that was my goal. This is a elegant alternative to using ```group_by(ResponseID)``` which is also an option. 
+For the third code line starting with ```mutate()```: The ```(.)``` refers to the whole dataframe, but I'm specifying the index that I want the function to apply here: ```(.[2,121]``` this is required if you have other data in your dataframe, such as ID numbers. The ```1``` refers to row-wise. I could have put a ```2``` for column-wise, if that was my goal. This is an elegant alternative to using ```group_by(ResponseID)``` which is also an option. 
 
 Next, I'm telling ```apply()``` that I want to (apply) use a function and that function is the ```mean()``` of the dataframe ```(.)``` so long as the values in the dataframe are greater than 0 and I want to keep my ```NA``` values (```(.[.>0], na.rm =T ```). Using any value greater than 0 will also exclude my ```-999``` which I want to impute later. 
 
@@ -64,8 +64,8 @@ final.df <- fd.df %>%
 Let's break this down. 
 * We are doing the same thing again with ```mutate_at()``` which is just to show functionality. You can do it with indexes too. 
 * The reason I have saved a column called `avg` is so I can check to ensure everything is working next. 
-* Now my fourth code line reads as follows: for all columns that start with "AD" (aka index 2, 121) apply the following `if_else` statement to the whole dataframe (denoted with the `~`). 
-* The `if_else` statement reads as folllows: if anywhere in the dataframe (denoted by `(.)`) is equal too `-999`, then replace with `avg`. If it's not, keep it the same (denoted by `(.)` again). 
+* Now my fourth code line reads as follows: for all columns that start with "AD" (aka index 2, 121) apply the following `if_else()` statement to the whole dataframe (denoted with the `~`). 
+* The `if_else()` statement reads as folllows: if anywhere in the dataframe (denoted by `(.)`) is equal too `-999`, then replace with `avg`. If it's not, keep it the same (denoted by `(.)` again). 
 
 The output will be successfully leaving all other data alone (e.g. ID's, demographics, contact information, etc) and only manipulating the columns specified in `starts_with()` and/or the index you give. 
 
@@ -82,8 +82,10 @@ check.df <- fd.df %>%
 ```
 When I ran this, the first line had ```-999``` and other values, which was nice.  Otherwise, I probably would have needed to come up with a better way to graph exactly waht I wanted (suggestions welcome). 
 
+```
       AD1B3 AD2B3 AD2B4 AD3B3 AD4B3 AD4B4 AD5B3 AD5B4 AD6B3 AD6B4 AD7B3 AD8B3 AD9B2 AD9B3 AD9B4 AD10B3 AD10B4
-[1]  -999.0     0     0     0     4  -999     0     0     0     0     0     0     0     0     0      0      0
+[1]  -999.0     0     0     0     4  -999     0     0     0     0     0     0     0     0     0      0      0 
+```
 
 If I run the same code above on the ```check.df``` for row 1 using ```slice(1)``` and the ```select_if``` to remove all columns that have a value of `0` or `NA` (since neither should be factored into my average), I can evaluate what the ```avg``` column should be:
 
@@ -95,9 +97,10 @@ check.df <- fd.df %>%
   slice(1) %>%
   select_if(~max(., na.rm = TRUE) > 0)  
   ```
-  
+```  
    AD4B2  AD4B3 AD12B2 AD12B3 avg
 [1]     2     4      4      4  3.5
+```
 Now I see that, 3.5 is the correct average. 
 
 I've saved my manipulated data to a dataframe called `final.df`. First, I took a look to make sure the `apply()` function for means was actually excluding all the values I wanted it to. 
@@ -109,7 +112,11 @@ final.df %>%
 ```
 
 This is what will be printed:
+```
     AD1B3 AD4B2 AD4B3 AD4B4 AD11B3 AD11B4 AD12B2 AD12B3 AD12B4 avg
 [1]   3.5     2     4   3.5    3.5    3.5      4      4    3.5 3.5
-
+```
 I know from my ```check.df``` dataframe that `AD1B3` was `-999` and now is replaced with the value in ```avg```. Everything looks good!
+
+# Looking for suggestions
+I really want my apply function to work in the `if_else()` statement so once I know it works, I can just run it without saving the `avg` column. Also, I'm new to the `apply()` function so any way to optimize it is also welcomed. 
